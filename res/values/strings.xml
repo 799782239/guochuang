@@ -1,8 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">android_mapceshi</string>
+    <string name="app_name">Notification</string>
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
+    <string name="hint_username">   输入用户名</string>
+    <string name="hint_password">   输入16位密码</string>
+    <string name="hint_repassword">   确认密码</string>
+    <string name="hint_name">   输入真实姓名</string>
+    <string name="hint_sex">   选择您的真实性别</string>
+    <string name="hint_phone">   输入电话号码</string>
+    <string name="man">男</string>
+    <string name="woman">女</string>
+    <string name="register">注册</string>
+    <string name="detail_theme">主题：</string>
+    <string name="detail_sender">发送者：</string>
+    <string name="detail_message">详细信息：</string>
+    <string name="detail_content">....</string>
+    <string name="detail_time">发送时间</string>
+    <string name="title">ditu</string>
+    <string name="img_desc"></string>
+    <string name="left_title">其它</string>
+    <string name="right_title">设置</string>
+    <string name="leftNav">好友栏</string>
+    <string name="rightNav">好友</string>
 
 </resources>
