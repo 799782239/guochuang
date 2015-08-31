@@ -64,6 +64,9 @@ public class Mapactivity extends ActionBarActivity implements
 	LocationClient mLocClient;
 	public MyLocationListenner myListener = new MyLocationListenner();
 	BitmapDescriptor mCurrentMarker;
+	private double mCurrentLantitude;
+	private double mCurrentLongitude;
+
 	// 地图相关
 	MapView mMapView;
 	BaiduMap mBaiduMap;
@@ -98,8 +101,8 @@ public class Mapactivity extends ActionBarActivity implements
 	private static final int SPEED = 30;
 	private boolean bIsScrolling = false;
 	private View mClickedView = null;
-	
-	private String sender;
+
+	private String sender = null;
 	private String reciver;
 
 	public void onCreate(Bundle savedInstanceState) {
@@ -108,7 +111,7 @@ public class Mapactivity extends ActionBarActivity implements
 		this.requestWindowFeature(Window.FEATURE_NO_TITLE);
 		// Intent intent=getIntent();
 		// sender=intent.getStringExtra("user");
-		sender="yanqi";
+		sender = "yanqi";
 		setContentView(R.layout.map);
 		initView();
 		mapactivity();
@@ -188,7 +191,9 @@ public class Mapactivity extends ActionBarActivity implements
 		ivTopButton.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
-
+				LatLng ll = new LatLng(mCurrentLantitude, mCurrentLongitude);
+				MapStatusUpdate u = MapStatusUpdateFactory.newLatLng(ll);
+				mBaiduMap.animateMapStatus(u);
 			}
 		});
 		ivMore.setOnTouchListener(this);
@@ -478,6 +483,8 @@ public class Mapactivity extends ActionBarActivity implements
 					.direction(100).latitude(location.getLatitude())
 					.longitude(location.getLongitude()).build();
 			mBaiduMap.setMyLocationData(locData);
+			mCurrentLongitude = location.getLongitude();
+			mCurrentLantitude = location.getLatitude();
 			if (isFirstLoc) {
 				isFirstLoc = false;
 				LatLng ll = new LatLng(location.getLatitude(),
@@ -547,12 +554,12 @@ public class Mapactivity extends ActionBarActivity implements
 					// MapStatusUpdate mapStatusUpdate = MapStatusUpdateFactory
 					// .newLatLng(cenpt);
 					// mBaiduMap.setMapStatus(mapStatusUpdate);
-					reciver=InfoList.get(arg2).getFriend_Name();
-					Intent intent=new Intent(Mapactivity.this,ChatActivity.class);
+					reciver = InfoList.get(arg2).getFriend_Name();
+					Intent intent = new Intent(Mapactivity.this,
+							ChatActivity.class);
 					intent.putExtra("sender", sender);
-					intent.putExtra("reciver", reciver);
+					intent.putExtra("reciver", "王嘉璐");
 					startActivity(intent);
-					
 
 				}
 			});

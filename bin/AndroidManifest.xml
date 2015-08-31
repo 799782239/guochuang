@@ -95,10 +95,10 @@
         <activity android:name="com.slidemenu.SlidemeunActivity" >
         </activity>
         <activity android:name="com.Chat.ChatActivity" >
-            
         </activity>
-        <service android:name="com.Chat.ChatService"></service>
 
+        <service android:name="com.Chat.ChatService" >
+        </service>
         <service
             android:name="com.baidu.location.f"
             android:enabled="true"

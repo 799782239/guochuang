@@ -44,11 +44,11 @@ public class ChatActivity extends Activity {
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
-		// TODO Auto-generated method stub
 		super.onCreate(savedInstanceState);
 		this.requestWindowFeature(Window.FEATURE_NO_TITLE);
 		setContentView(R.layout.talk);
 		Intent intent = getIntent();
+		//实例化组件
 		sender = intent.getStringExtra("sender");
 		reciver = intent.getStringExtra("reciver");
 		send = (Button) this.findViewById(R.id.send);
@@ -59,83 +59,21 @@ public class ChatActivity extends Activity {
 		list = new ArrayList<DataC>();
 		textAdpter = new TextAdpter(list, this);
 		listView.setAdapter(textAdpter);
-		// Intent intent2 = new Intent(ChatActivity.this, ChatService.class);
-		// intent.putExtra("sender", sender);
-		// startService(intent2);
-		// Log.i("TAG", "1");
-		// IntentFilter filter = new IntentFilter();
-		// filter.addAction("reciver");
-		// registerReceiver(broadcastReceiver, filter);
-		connect();
+		//启动服务
+		Intent intent2 = new Intent(ChatActivity.this, ChatService.class);
+		intent2.putExtra("sender", sender);
+		startService(intent2);
+		Log.i("TAG", "1");
+
 		send.setOnClickListener(new OnClickListener() {
 
 			@Override
 			public void onClick(View v) {
-				// TODO Auto-generated method stub
+				//发送消息
 				send();
 			}
 		});
 
-	}
-
-	private Socket socket = null;
-	private BufferedWriter writer = null;
-	private BufferedReader reader = null;
-
-	public void connect() {
-		AsyncTask<Void, String, Void> read = new AsyncTask<Void, String, Void>() {
-
-			@Override
-			protected Void doInBackground(Void... arg0) {
-				try {
-					socket = new Socket(ip, 12345);
-					writer = new BufferedWriter(new OutputStreamWriter(
-							socket.getOutputStream()));
-					reader = new BufferedReader(new InputStreamReader(
-							socket.getInputStream()));
-					publishProgress("@success");
-					JSONObject jsonObject = new JSONObject();
-					jsonObject.put("state", "add");
-					jsonObject.put("Id", sender);
-					writer.write(jsonObject.toString() + "\n");
-					writer.flush();
-				} catch (UnknownHostException e1) {
-					Toast.makeText(ChatActivity.this, "无法建立链接",
-							Toast.LENGTH_SHORT).show();
-				} catch (IOException e1) {
-					Toast.makeText(ChatActivity.this, "无法建立链接",
-							Toast.LENGTH_SHORT).show();
-				} catch (JSONException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				try {
-					String line;
-					while ((line = reader.readLine()) != null) {
-						publishProgress(line);
-					}
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				return null;
-			}
-
-			@Override
-			protected void onProgressUpdate(String... values) {
-				if (values[0].equals("@success")) {
-					Toast.makeText(ChatActivity.this, "链接成功！",
-							Toast.LENGTH_SHORT).show();
-
-				}
-				DataC dataC = new DataC(values[0], DataC.RECIVER);
-				list.add(dataC);
-				textAdpter.notifyDataSetChanged();
-				// text.append("别人说：" + values[0] + "\n");
-				super.onProgressUpdate(values);
-			}
-		};
-		read.execute();
 	}
 
 	public void send() {
@@ -143,37 +81,51 @@ public class ChatActivity extends Activity {
 			DataC c = new DataC(editText.getText().toString(), DataC.SEND);
 			list.add(c);
 			textAdpter.notifyDataSetChanged();
-			// text.append("我说：" + editText.getText().toString() + "\n");
+			//整理发送的消息
 			JSONObject jsonObject = new JSONObject();
 			jsonObject.put("state", "chat");
 			jsonObject.put("send", reciver);
 			jsonObject.put("content", editText.getText().toString());
-			writer.write(jsonObject.toString() + "\n");
-			writer.flush();
+			//以广播形式发送
+			Intent intent = new Intent();
+			intent.setAction("send");
+			intent.putExtra("content", jsonObject.toString());
+			sendBroadcast(intent);
+			Log.i("TAG", jsonObject.toString());
 			editText.setText("");
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 		} catch (JSONException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
 
-	// private BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
-	// public void onReceive(Context context, Intent intent) {
-	// if (intent.getAction() == "reciver") {
-	// String content = intent.getStringExtra("content");
-	// DataC dataC = new DataC(content, DataC.RECIVER);
-	// list.add(dataC);
-	// textAdpter.notifyDataSetChanged();
-	//
-	// }
-	// }
-	// };
+	private BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
+		public void onReceive(Context context, Intent intent) {
+			//设置接收广播接受对方的消息
+			if (intent.getAction() == "reciver") {
+				String content = intent.getStringExtra("content");
+				DataC dataC = new DataC(content, DataC.RECIVER);
+				list.add(dataC);
+				textAdpter.notifyDataSetChanged();
+
+			}
+		}
+	};
+
 	@Override
 	protected void onPause() {
+		unregisterReceiver(broadcastReceiver);
+		Intent intent=new Intent();
+		intent.setAction("state");
+		sendBroadcast(intent);
 		super.onPause();
+	}
+
+	@Override
+	protected void onStart() {
+		IntentFilter filter = new IntentFilter();
+		filter.addAction("reciver");
+		registerReceiver(broadcastReceiver, filter);
+		super.onStart();
 	}
 
 }
