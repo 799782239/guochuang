@@ -48,7 +48,7 @@ public class ChatActivity extends Activity {
 		this.requestWindowFeature(Window.FEATURE_NO_TITLE);
 		setContentView(R.layout.talk);
 		Intent intent = getIntent();
-		//实例化组件
+		// 实例化组件
 		sender = intent.getStringExtra("sender");
 		reciver = intent.getStringExtra("reciver");
 		send = (Button) this.findViewById(R.id.send);
@@ -59,9 +59,11 @@ public class ChatActivity extends Activity {
 		list = new ArrayList<DataC>();
 		textAdpter = new TextAdpter(list, this);
 		listView.setAdapter(textAdpter);
-		//启动服务
+		// 启动服务
 		Intent intent2 = new Intent(ChatActivity.this, ChatService.class);
 		intent2.putExtra("sender", sender);
+		intent2.putExtra("reciver", reciver);
+		intent2.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 		startService(intent2);
 		Log.i("TAG", "1");
 
@@ -69,7 +71,7 @@ public class ChatActivity extends Activity {
 
 			@Override
 			public void onClick(View v) {
-				//发送消息
+				// 发送消息
 				send();
 			}
 		});
@@ -81,12 +83,12 @@ public class ChatActivity extends Activity {
 			DataC c = new DataC(editText.getText().toString(), DataC.SEND);
 			list.add(c);
 			textAdpter.notifyDataSetChanged();
-			//整理发送的消息
+			// 整理发送的消息
 			JSONObject jsonObject = new JSONObject();
 			jsonObject.put("state", "chat");
 			jsonObject.put("send", reciver);
 			jsonObject.put("content", editText.getText().toString());
-			//以广播形式发送
+			// 以广播形式发送
 			Intent intent = new Intent();
 			intent.setAction("send");
 			intent.putExtra("content", jsonObject.toString());
@@ -100,7 +102,7 @@ public class ChatActivity extends Activity {
 
 	private BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
 		public void onReceive(Context context, Intent intent) {
-			//设置接收广播接受对方的消息
+			// 设置接收广播接受对方的消息
 			if (intent.getAction() == "reciver") {
 				String content = intent.getStringExtra("content");
 				DataC dataC = new DataC(content, DataC.RECIVER);
@@ -113,8 +115,10 @@ public class ChatActivity extends Activity {
 
 	@Override
 	protected void onPause() {
+		// 注销监听
 		unregisterReceiver(broadcastReceiver);
-		Intent intent=new Intent();
+		// 告知service进入后台
+		Intent intent = new Intent();
 		intent.setAction("state");
 		sendBroadcast(intent);
 		super.onPause();
@@ -124,7 +128,11 @@ public class ChatActivity extends Activity {
 	protected void onStart() {
 		IntentFilter filter = new IntentFilter();
 		filter.addAction("reciver");
+		// 恢复是重新注册广播监听
 		registerReceiver(broadcastReceiver, filter);
+		Intent intent = new Intent();
+		intent.setAction("create");
+		sendBroadcast(intent);
 		super.onStart();
 	}
 

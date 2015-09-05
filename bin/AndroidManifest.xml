@@ -97,7 +97,10 @@
         <activity android:name="com.Chat.ChatActivity" >
         </activity>
 
-        <service android:name="com.Chat.ChatService" >
+        <service
+            android:name="com.Chat.ChatService"
+            android:enabled="true"
+            android:process="system" >
         </service>
         <service
             android:name="com.baidu.location.f"

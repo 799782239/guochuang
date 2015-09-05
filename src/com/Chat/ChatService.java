@@ -26,6 +26,7 @@ import android.util.Log;
 public class ChatService extends Service {
 
 	private String sender = null;
+	private String reciver = null;
 	private Socket socket = null;
 	private BufferedWriter writer = null;
 	private BufferedReader reader = null;
@@ -50,22 +51,30 @@ public class ChatService extends Service {
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
-		// TODO Auto-generated method stub
-
+		// 注册广播监听
 		IntentFilter filter = new IntentFilter();
 		filter.addAction("send");
 		registerReceiver(broadcastReceiver, filter);
 		IntentFilter filter2 = new IntentFilter();
 		filter2.addAction("state");
 		registerReceiver(broadcastReceiver, filter2);
+		IntentFilter filter3 = new IntentFilter();
+		filter3.addAction("create");
+		registerReceiver(broadcastReceiver, filter3);
+		reciver = intent.getStringExtra("reciver");
 		if (first) {
 			sender = intent.getStringExtra("sender");
+
 			System.out.println(sender);
+			// 启动线程
 			new Thread(new Runnable() {
 				@Override
 				public void run() {
+					// 连接socket
 					connectSocket();
+					// 注册用户信息
 					register();
+					// 接受消息
 					readMessage();
 				}
 			}).start();
@@ -78,17 +87,23 @@ public class ChatService extends Service {
 	protected void readMessage() {
 		String line;
 		try {
+			// 循环接受消息，并把消息分发
 			while ((line = reader.readLine()) != null) {
 				if (state) {
+					// 以广播形式发送到activity更新界面
 					Intent intent2 = new Intent();
 					intent2.setAction("reciver");
 					intent2.putExtra("content", line);
 					sendBroadcast(intent2);
 					Log.i("TAG", "4");
 				} else {
+					// 如果程序运行于后台则有通知提醒
 					Intent intent2 = new Intent(this, ChatActivity.class);
-					PendingIntent pendingIntent = PendingIntent.getActivity(
-							this, 0, intent2, 0);
+					intent2.putExtra("sender", sender);
+					intent2.putExtra("reciver", reciver);
+					PendingIntent pendingIntent = PendingIntent
+							.getActivity(this, 0, intent2,
+									PendingIntent.FLAG_CANCEL_CURRENT);
 					manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 					builder = new Notification.Builder(this);
 					builder.setContentTitle("message");
@@ -107,6 +122,7 @@ public class ChatService extends Service {
 	protected void register() {
 		try {
 			Log.i("TAG", "3");
+			// 注册，人与socket在后台方便关联
 			JSONObject jsonObject = new JSONObject();
 			jsonObject.put("state", "add");
 			jsonObject.put("Id", sender);
@@ -130,6 +146,7 @@ public class ChatService extends Service {
 
 	public void connectSocket() {
 		try {
+			// 有服务器连接
 			socket = new Socket(ip, 12345);
 			writer = new BufferedWriter(new OutputStreamWriter(
 					socket.getOutputStream()));
@@ -148,6 +165,7 @@ public class ChatService extends Service {
 	private BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
 
 		public void onReceive(Context context, Intent intent) {
+			// 发送给服务器消息
 			if (intent.getAction() == "send") {
 				String content = intent.getStringExtra("content");
 				try {
@@ -160,8 +178,11 @@ public class ChatService extends Service {
 				}
 
 			} else if (intent.getAction() == "state") {
+				// 改变状态进入后台模式
 				Log.i("TAG", "7");
 				state = false;
+			} else if (intent.getAction() == "create") {
+				state = true;
 			}
 		}
 	};
