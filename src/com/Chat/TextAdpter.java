@@ -2,6 +2,7 @@ package com.Chat;
 
 import java.util.List;
 
+import com.DB.User;
 import com.example.notification.R;
 
 import android.R.layout;
@@ -23,37 +24,77 @@ public class TextAdpter extends BaseAdapter {
 		this.context = convertView;
 	}
 
+	public void addAll(List<User> data) {
+		for (int i = 0; i < data.size(); i++) {
+			DataC c = new DataC(data.get(i).getMsgData(), data.get(i)
+					.getStatus());
+			list.add(c);
+		}
+		notifyDataSetChanged();
+	}
+
 	@Override
 	public int getCount() {
-		// TODO Auto-generated method stub
 		return list.size();
 	}
 
 	@Override
 	public Object getItem(int position) {
-		// TODO Auto-generated method stub
 		return list.get(position);
 	}
 
 	@Override
 	public long getItemId(int position) {
-		// TODO Auto-generated method stub
 		return position;
 	}
 
 	@Override
 	public View getView(int position, View convertView, ViewGroup parent) {
-		LayoutInflater inflater = LayoutInflater.from(context);
-		if (list.get(position).getFlag() == DataC.RECIVER) {
-			layout = (RelativeLayout) inflater.inflate(R.layout.talk_to_other, null);
+		if (convertView == null) {
+			if (list.get(position).getFlag() == DataC.RECIVER) {
+				convertView = LayoutInflater.from(context).inflate(
+						R.layout.talk_to_other, null);
+				convertView.setTag(DataC.RECIVER, new TextCellL(
+						(TextView) convertView.findViewById(R.id.leftc)));
+			} else if (list.get(position).getFlag() == DataC.SEND) {
+				convertView = LayoutInflater.from(context).inflate(
+						R.layout.talk_to_me, null);
+				convertView.setTag(DataC.SEND, new TextCellR(
+						(TextView) convertView.findViewById(R.id.leftc)));
+			}
+
 		}
 		if (list.get(position).getFlag() == DataC.SEND) {
-			layout = (RelativeLayout) inflater
-					.inflate(R.layout.talk_to_me, null);
+			TextCellR textCellR = (TextCellR) convertView.getTag(DataC.SEND);
+			textCellR.getTextView().setText(list.get(position).getContent());
+		} else if (list.get(position).getFlag() == DataC.RECIVER) {
+			TextCellL textCellL = (TextCellL) convertView.getTag(DataC.RECIVER);
+			textCellL.getTextView().setText(list.get(position).getContent());
 		}
-		TextView tv = (TextView) layout.findViewById(R.id.leftc);
-		tv.setText(list.get(position).getContent());
-		return layout;
+		return convertView;
 	}
 
+	public static class TextCellL {
+		private TextView textView;
+
+		public TextCellL(TextView textView) {
+			this.textView = textView;
+		}
+
+		public TextView getTextView() {
+			return textView;
+		}
+	}
+
+	public static class TextCellR {
+		private TextView textView;
+
+		public TextCellR(TextView textView) {
+			this.textView = textView;
+		}
+
+		public TextView getTextView() {
+			return textView;
+		}
+	}
 }

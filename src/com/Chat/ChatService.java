@@ -30,7 +30,7 @@ public class ChatService extends Service {
 	private Socket socket = null;
 	private BufferedWriter writer = null;
 	private BufferedReader reader = null;
-	private String ip = "192.168.1.109";
+	private String ip = ChatConfig.CHAT_IP;
 	private Boolean state = true;
 	private NotificationManager manager;
 	private Builder builder;
@@ -38,13 +38,11 @@ public class ChatService extends Service {
 
 	@Override
 	public IBinder onBind(Intent intent) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public void onCreate() {
-		// TODO Auto-generated method stub
 		first = true;
 		super.onCreate();
 	}
@@ -53,17 +51,17 @@ public class ChatService extends Service {
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		// 注册广播监听
 		IntentFilter filter = new IntentFilter();
-		filter.addAction("send");
+		filter.addAction(ChatConfig.ACTION_SEND);
 		registerReceiver(broadcastReceiver, filter);
 		IntentFilter filter2 = new IntentFilter();
-		filter2.addAction("state");
+		filter2.addAction(ChatConfig.ACTION_STATE);
 		registerReceiver(broadcastReceiver, filter2);
 		IntentFilter filter3 = new IntentFilter();
-		filter3.addAction("create");
+		filter3.addAction(ChatConfig.ACTION_CREAT);
 		registerReceiver(broadcastReceiver, filter3);
-		reciver = intent.getStringExtra("reciver");
+		reciver = intent.getStringExtra(ChatConfig.RECIVER);
 		if (first) {
-			sender = intent.getStringExtra("sender");
+			sender = intent.getStringExtra(ChatConfig.SENDER);
 
 			System.out.println(sender);
 			// 启动线程
@@ -92,15 +90,15 @@ public class ChatService extends Service {
 				if (state) {
 					// 以广播形式发送到activity更新界面
 					Intent intent2 = new Intent();
-					intent2.setAction("reciver");
-					intent2.putExtra("content", line);
+					intent2.setAction(ChatConfig.ACTION_RECIVER);
+					intent2.putExtra(ChatConfig.CONTENT, line);
 					sendBroadcast(intent2);
 					Log.i("TAG", "4");
 				} else {
 					// 如果程序运行于后台则有通知提醒
 					Intent intent2 = new Intent(this, ChatActivity.class);
-					intent2.putExtra("sender", sender);
-					intent2.putExtra("reciver", reciver);
+					intent2.putExtra(ChatConfig.SENDER, sender);
+					intent2.putExtra(ChatConfig.RECIVER, reciver);
 					PendingIntent pendingIntent = PendingIntent
 							.getActivity(this, 0, intent2,
 									PendingIntent.FLAG_CANCEL_CURRENT);
@@ -114,7 +112,6 @@ public class ChatService extends Service {
 				}
 			}
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
@@ -130,17 +127,14 @@ public class ChatService extends Service {
 			writer.flush();
 			Log.i("TAG", jsonObject.toString());
 		} catch (JSONException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
 
 	@Override
 	public void onDestroy() {
-		// TODO Auto-generated method stub
 		super.onDestroy();
 	}
 
@@ -154,10 +148,8 @@ public class ChatService extends Service {
 					socket.getInputStream()));
 			Log.i("TAG", "2");
 		} catch (UnknownHostException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
@@ -166,22 +158,21 @@ public class ChatService extends Service {
 
 		public void onReceive(Context context, Intent intent) {
 			// 发送给服务器消息
-			if (intent.getAction() == "send") {
-				String content = intent.getStringExtra("content");
+			if (intent.getAction() == ChatConfig.ACTION_SEND) {
+				String content = intent.getStringExtra(ChatConfig.CONTENT);
 				try {
 					Log.i("TAG", "5");
 					writer.write(content + "\n");
 					writer.flush();
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 
-			} else if (intent.getAction() == "state") {
+			} else if (intent.getAction() == ChatConfig.ACTION_STATE) {
 				// 改变状态进入后台模式
 				Log.i("TAG", "7");
 				state = false;
-			} else if (intent.getAction() == "create") {
+			} else if (intent.getAction() == ChatConfig.ACTION_CREAT) {
 				state = true;
 			}
 		}

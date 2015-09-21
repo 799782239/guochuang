@@ -1,25 +1,16 @@
 package com.Chat;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.net.Socket;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import com.example.notification.R;
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -29,18 +20,25 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
+
+import com.DB.ChatDBAddThread;
+import com.DB.ChatDBThread;
+import com.DB.ChatDataCallBack;
+import com.DB.DBManager;
+import com.DB.User;
+import com.example.notification.R;
 
 public class ChatActivity extends Activity {
 	private String sender = null;
 	private String reciver = null;
-	private String ip = "192.168.1.109";
 	private EditText editText;
 	private ListView listView;
 	private List<DataC> list;
 	private TextAdpter textAdpter;
 	private TextView textView;
 	private Button send;
+	private ChatDBThread thread;
+	private ChatDBAddThread addThread;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -49,20 +47,32 @@ public class ChatActivity extends Activity {
 		setContentView(R.layout.talk);
 		Intent intent = getIntent();
 		// 实例化组件
-		sender = intent.getStringExtra("sender");
-		reciver = intent.getStringExtra("reciver");
+		sender = intent.getStringExtra(ChatConfig.SENDER);
+		reciver = intent.getStringExtra(ChatConfig.RECIVER);
 		send = (Button) this.findViewById(R.id.send);
 		editText = (EditText) this.findViewById(R.id.edit);
 		listView = (ListView) this.findViewById(R.id.lv);
 		textView = (TextView) this.findViewById(R.id.ip);
+		// 检查是否存在这个表
+		DBManager dbManager = new DBManager(this);
+		dbManager.OnCreate(reciver);
 		textView.setText(reciver);
 		list = new ArrayList<DataC>();
 		textAdpter = new TextAdpter(list, this);
 		listView.setAdapter(textAdpter);
+		thread = new ChatDBThread(reciver, new ChatDataCallBack() {
+
+			@Override
+			public void result(List<User> list) {
+				textAdpter.addAll(list);
+				Log.i("TAG", "upload");
+			}
+		}, this);
+		thread.start();
 		// 启动服务
 		Intent intent2 = new Intent(ChatActivity.this, ChatService.class);
-		intent2.putExtra("sender", sender);
-		intent2.putExtra("reciver", reciver);
+		intent2.putExtra(ChatConfig.SENDER, sender);
+		intent2.putExtra(ChatConfig.RECIVER, reciver);
 		intent2.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 		startService(intent2);
 		Log.i("TAG", "1");
@@ -83,6 +93,10 @@ public class ChatActivity extends Activity {
 			DataC c = new DataC(editText.getText().toString(), DataC.SEND);
 			list.add(c);
 			textAdpter.notifyDataSetChanged();
+			addThread = new ChatDBAddThread(reciver, this, editText.getText()
+					.toString(), DataC.SEND);
+			Log.i("TAG", "save");
+			addThread.start();
 			// 整理发送的消息
 			JSONObject jsonObject = new JSONObject();
 			jsonObject.put("state", "chat");
@@ -90,8 +104,8 @@ public class ChatActivity extends Activity {
 			jsonObject.put("content", editText.getText().toString());
 			// 以广播形式发送
 			Intent intent = new Intent();
-			intent.setAction("send");
-			intent.putExtra("content", jsonObject.toString());
+			intent.setAction(ChatConfig.ACTION_SEND);
+			intent.putExtra(ChatConfig.CONTENT, jsonObject.toString());
 			sendBroadcast(intent);
 			Log.i("TAG", jsonObject.toString());
 			editText.setText("");
@@ -103,11 +117,14 @@ public class ChatActivity extends Activity {
 	private BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
 		public void onReceive(Context context, Intent intent) {
 			// 设置接收广播接受对方的消息
-			if (intent.getAction() == "reciver") {
-				String content = intent.getStringExtra("content");
+			if (intent.getAction() == ChatConfig.ACTION_RECIVER) {
+				String content = intent.getStringExtra(ChatConfig.CONTENT);
 				DataC dataC = new DataC(content, DataC.RECIVER);
 				list.add(dataC);
 				textAdpter.notifyDataSetChanged();
+				addThread = new ChatDBAddThread(reciver,
+						getApplicationContext(), content, DataC.RECIVER);
+				addThread.start();
 
 			}
 		}
@@ -119,7 +136,7 @@ public class ChatActivity extends Activity {
 		unregisterReceiver(broadcastReceiver);
 		// 告知service进入后台
 		Intent intent = new Intent();
-		intent.setAction("state");
+		intent.setAction(ChatConfig.ACTION_STATE);
 		sendBroadcast(intent);
 		super.onPause();
 	}
@@ -127,11 +144,11 @@ public class ChatActivity extends Activity {
 	@Override
 	protected void onStart() {
 		IntentFilter filter = new IntentFilter();
-		filter.addAction("reciver");
+		filter.addAction(ChatConfig.ACTION_RECIVER);
 		// 恢复是重新注册广播监听
 		registerReceiver(broadcastReceiver, filter);
 		Intent intent = new Intent();
-		intent.setAction("create");
+		intent.setAction(ChatConfig.ACTION_CREAT);
 		sendBroadcast(intent);
 		super.onStart();
 	}

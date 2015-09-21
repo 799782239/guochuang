@@ -558,7 +558,7 @@ public class Mapactivity extends ActionBarActivity implements
 					Intent intent = new Intent(Mapactivity.this,
 							ChatActivity.class);
 					intent.putExtra("sender", sender);
-					intent.putExtra("reciver", "Íõ¼Îè´");
+					intent.putExtra("reciver", "wangjialu");
 					startActivity(intent);
 
 				}
