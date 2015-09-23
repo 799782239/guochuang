@@ -60,11 +60,13 @@ public class ChatActivity extends Activity {
 		list = new ArrayList<DataC>();
 		textAdpter = new TextAdpter(list, this);
 		listView.setAdapter(textAdpter);
+
 		thread = new ChatDBThread(reciver, new ChatDataCallBack() {
 
 			@Override
 			public void result(List<User> list) {
 				textAdpter.addAll(list);
+				listView.setSelection(listView.getCount() - 1);
 				Log.i("TAG", "upload");
 			}
 		}, this);
@@ -88,6 +90,7 @@ public class ChatActivity extends Activity {
 
 	}
 
+	// 发送消息
 	public void send() {
 		try {
 			DataC c = new DataC(editText.getText().toString(), DataC.SEND);
@@ -100,7 +103,8 @@ public class ChatActivity extends Activity {
 			// 整理发送的消息
 			JSONObject jsonObject = new JSONObject();
 			jsonObject.put("state", "chat");
-			jsonObject.put("send", reciver);
+			jsonObject.put("send", reciver);// send为接受消息的人
+			jsonObject.put("sender", sender);// sender为发送消息的人
 			jsonObject.put("content", editText.getText().toString());
 			// 以广播形式发送
 			Intent intent = new Intent();
@@ -118,13 +122,22 @@ public class ChatActivity extends Activity {
 		public void onReceive(Context context, Intent intent) {
 			// 设置接收广播接受对方的消息
 			if (intent.getAction() == ChatConfig.ACTION_RECIVER) {
+				String obj_reciver = intent.getStringExtra("reciver");
 				String content = intent.getStringExtra(ChatConfig.CONTENT);
-				DataC dataC = new DataC(content, DataC.RECIVER);
-				list.add(dataC);
-				textAdpter.notifyDataSetChanged();
-				addThread = new ChatDBAddThread(reciver,
-						getApplicationContext(), content, DataC.RECIVER);
-				addThread.start();
+				if (obj_reciver.equals(reciver)) {
+
+					DataC dataC = new DataC(content, DataC.RECIVER);
+					list.add(dataC);
+					textAdpter.notifyDataSetChanged();
+					// 得到是谁发送的消息
+					addThread = new ChatDBAddThread(reciver,
+							getApplicationContext(), content, DataC.RECIVER);
+					addThread.start();
+				} else {
+					addThread = new ChatDBAddThread(obj_reciver,
+							getApplicationContext(), content, DataC.RECIVER);
+					addThread.start();
+				}
 
 			}
 		}
@@ -153,4 +166,14 @@ public class ChatActivity extends Activity {
 		super.onStart();
 	}
 
+	@Override
+	protected void onStop() {
+		stopService(new Intent(ChatActivity.this, ChatService.class));
+		super.onStop();
+	}
+
+	@Override
+	protected void onDestroy() {
+		super.onDestroy();
+	}
 }

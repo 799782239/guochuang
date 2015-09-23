@@ -24,5 +24,7 @@
     <string name="right_title">设置</string>
     <string name="leftNav">好友栏</string>
     <string name="rightNav">好友</string>
+    <item type="id"	name="tag_left"></item>
+    <item type="id"	name="tag_right"></item>
 
 </resources>

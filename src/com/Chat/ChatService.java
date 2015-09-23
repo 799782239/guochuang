@@ -89,11 +89,21 @@ public class ChatService extends Service {
 			while ((line = reader.readLine()) != null) {
 				if (state) {
 					// 以广播形式发送到activity更新界面
-					Intent intent2 = new Intent();
-					intent2.setAction(ChatConfig.ACTION_RECIVER);
-					intent2.putExtra(ChatConfig.CONTENT, line);
-					sendBroadcast(intent2);
-					Log.i("TAG", "4");
+					try {
+						JSONObject obj = new JSONObject(line);
+						String obj_reciver = obj.getString("sender");
+						String obj_content = obj.getString("content");
+						Intent intent2 = new Intent();
+						intent2.setAction(ChatConfig.ACTION_RECIVER);
+						intent2.putExtra("reciver", obj_reciver);
+						intent2.putExtra(ChatConfig.CONTENT, obj_content);
+						sendBroadcast(intent2);
+						Log.i("TAG", "4");
+					} catch (JSONException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+
 				} else {
 					// 如果程序运行于后台则有通知提醒
 					Intent intent2 = new Intent(this, ChatActivity.class);
@@ -135,6 +145,9 @@ public class ChatService extends Service {
 
 	@Override
 	public void onDestroy() {
+		Log.i("TAG", "destory");
+		unregisterReceiver(broadcastReceiver);
+		stopSelf();
 		super.onDestroy();
 	}
 

@@ -2,22 +2,19 @@ package com.Chat;
 
 import java.util.List;
 
-import com.DB.User;
-import com.example.notification.R;
-
-import android.R.layout;
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
+
+import com.DB.User;
+import com.example.notification.R;
 
 public class TextAdpter extends BaseAdapter {
 	private List<DataC> list;
 	private Context context;
-	private RelativeLayout layout;
 
 	public TextAdpter(List<DataC> list, Context convertView) {
 		this.list = list;
@@ -50,51 +47,95 @@ public class TextAdpter extends BaseAdapter {
 
 	@Override
 	public View getView(int position, View convertView, ViewGroup parent) {
+		TextCellL textCellL = null;
+		TextCellR textCellR = null;
 		if (convertView == null) {
+			// if (list.get(position).getFlag() == DataC.RECIVER) {
+			// convertView = LayoutInflater.from(context).inflate(
+			// R.layout.talk_to_other, null);
+			// textCell.setTextViewL((TextView) convertView
+			// .findViewById(R.id.leftc));
+			// convertView.setTag(textCell);
+			// } else if (list.get(position).getFlag() == DataC.SEND) {
+			// convertView = LayoutInflater.from(context).inflate(
+			// R.layout.talk_to_me, null);
+			// textCell.setTextViewR((TextView) convertView
+			// .findViewById(R.id.leftc));
+			// convertView.setTag(textCell);
+			// }
 			if (list.get(position).getFlag() == DataC.RECIVER) {
+				textCellL = new TextCellL();
 				convertView = LayoutInflater.from(context).inflate(
 						R.layout.talk_to_other, null);
-				convertView.setTag(DataC.RECIVER, new TextCellL(
-						(TextView) convertView.findViewById(R.id.leftc)));
+				textCellL.setTextViewL((TextView) convertView
+						.findViewById(R.id.leftc));
+				convertView.setTag(textCellL);
 			} else if (list.get(position).getFlag() == DataC.SEND) {
+				textCellR = new TextCellR();
 				convertView = LayoutInflater.from(context).inflate(
 						R.layout.talk_to_me, null);
-				convertView.setTag(DataC.SEND, new TextCellR(
-						(TextView) convertView.findViewById(R.id.leftc)));
+				textCellR.setTextViewR((TextView) convertView
+						.findViewById(R.id.leftc));
+				convertView.setTag(textCellR);
 			}
+		} else {
+			if (list.get(position).getFlag() == DataC.SEND) {
+				if (convertView.getTag().getClass().equals(textCellR)) {
+					textCellR = (TextCellR) convertView.getTag();
+				} else {
+					textCellR = new TextCellR();
+					convertView = LayoutInflater.from(context).inflate(
+							R.layout.talk_to_me, null);
+					textCellR.setTextViewR((TextView) convertView
+							.findViewById(R.id.leftc));
+					convertView.setTag(textCellR);
+				}
 
+			} else if (list.get(position).getFlag() == DataC.RECIVER) {
+				if (convertView.getTag().getClass().equals(textCellL)) {
+					textCellL = (TextCellL) convertView.getTag();
+				} else {
+					textCellL = new TextCellL();
+					convertView = LayoutInflater.from(context).inflate(
+							R.layout.talk_to_other, null);
+					textCellL.setTextViewL((TextView) convertView
+							.findViewById(R.id.leftc));
+					convertView.setTag(textCellL);
+				}
+
+			}
 		}
 		if (list.get(position).getFlag() == DataC.SEND) {
-			TextCellR textCellR = (TextCellR) convertView.getTag(DataC.SEND);
-			textCellR.getTextView().setText(list.get(position).getContent());
+			textCellR.getTextViewR().setText(list.get(position).getContent());
 		} else if (list.get(position).getFlag() == DataC.RECIVER) {
-			TextCellL textCellL = (TextCellL) convertView.getTag(DataC.RECIVER);
-			textCellL.getTextView().setText(list.get(position).getContent());
+			textCellL.getTextViewL().setText(list.get(position).getContent());
 		}
 		return convertView;
 	}
 
 	public static class TextCellL {
-		private TextView textView;
+		private TextView textViewL;
 
-		public TextCellL(TextView textView) {
-			this.textView = textView;
+		public TextView getTextViewL() {
+			return textViewL;
 		}
 
-		public TextView getTextView() {
-			return textView;
+		public void setTextViewL(TextView textViewL) {
+			this.textViewL = textViewL;
 		}
 	}
 
 	public static class TextCellR {
-		private TextView textView;
+		private TextView textViewR;
 
-		public TextCellR(TextView textView) {
-			this.textView = textView;
+		public TextView getTextViewR() {
+			return textViewR;
 		}
 
-		public TextView getTextView() {
-			return textView;
+		public void setTextViewR(TextView textViewR) {
+			this.textViewR = textViewR;
 		}
+
 	}
+
 }
